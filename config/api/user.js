@@ -82,3 +82,10 @@ export const getQy = (params, config = {
 }) => http.post('/api/fk/qy/authentication', params, config)
 // get请求
 export const getMenu = (data) => http.get('url', data)
+
+// 检测余额是否充足
+export const isEnoughVerify = (params, config = {
+	custom: {
+		auth: true
+	}
+}) => http.post('/api/fk/enough/verify', params, config)

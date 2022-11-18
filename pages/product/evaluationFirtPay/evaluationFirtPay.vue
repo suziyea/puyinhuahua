@@ -1,6 +1,6 @@
 <template>
 	<view class="container" v-if="showFlag">
-		<common-dialog v-if="showDialog" title="温馨提示" content="请您保证余额在300元以上，否则会误判您还款能力导致下款失败！" :showCancel="true"
+		<common-dialog v-if="showDialog" title="温馨提示" :content="`请您保证余额在${service_charge}元以上，否则会误判您还款能力导致下款失败！`" :showCancel="true"
 			confirmText="重新绑卡" cancelText="原卡重试" v-on:on-click-dialog="onClickDialog"></common-dialog>
 		<!-- 预计放款内容 -->
 		<view class="predict_loan">
@@ -106,6 +106,11 @@
 				<text class="restSms" v-else @click="restSmsCode">重新获取</text>
 			</view>
 		</u-popup>
+		<!-- loading -->
+		<view class="hello">
+			<u-loading-page :loading="loadingStatus" loadingColor="#1B8DFF" loading-text="loading..."
+				bg-color="transparent"></u-loading-page>
+		</view>
 	</view>
 
 </template>
@@ -123,6 +128,7 @@
 	import {
 		sendFirstOrderSms,
 		payVerify,
+		isEnoughVerify
 	} from "@/config/api/product.js";
 	import common from '@/utils/common.js'
 	export default {
@@ -165,9 +171,12 @@
 				seconds: 60,
 				restCode: false,
 				timer: '',
+				gainPayStatusTimer: '',
 				closeable: true,
 				closeOnClickOverlay: false,
 				service_charge: '', // 服务费
+				loadingStatus: false,
+
 			}
 		},
 		computed: {
@@ -316,6 +325,8 @@
 				clearInterval(this.timer)
 			},
 			finishSmsCode() {
+							this.showPopup = false;
+
 				payVerify({
 						order_no: this.order_no,
 						code: this.smsCodeValue
@@ -324,29 +335,21 @@
 						// if (res.code === 121000 || res.code === 123000) {
 						// 	let closeStatus;
 						// 	if (res.code === 123000) closeStatus = 'smserr'
-						// 	this.close(closeStatus)
-						// 	Promise.reject(res)
+						// 	this.showDialog = true
+						// 	this.showPopup = false;
 						// 	return;
 						// }
-						if (res.code === 121000 || res.code === 123000) {
-							let closeStatus;
-							if (res.code === 123000) closeStatus = 'smserr'
-							this.showDialog = true
-							this.showPopup = false;
-							return;
-						}
 						if (res.code === 100000) {
-							this.showPopup = false;
-							await this.$store.dispatch('setCurrentUserInfo')
-							uni.$u.route('/pages/payResult/payResult', {
-								serviceType: 1,
-								service_charge: this.service_charge
-							});
+							// await this.$store.dispatch('setCurrentUserInfo')
+							// uni.$u.route('/pages/payResult/payResult', {
+							// 	serviceType: 1,
+							// 	service_charge: this.service_charge
+							// });
+							this.isEnoughVerifyDemand()
 						}
 
 					})
 					.catch((err) => {
-						this.showPopup = false;
 						if (this.getInsufficientBalance) {
 							uni.$u.toast(data.msg)
 							return;
@@ -357,6 +360,35 @@
 						});
 					});
 			},
+			// 检测余额是否充足
+			isEnoughVerifyDemand() {
+				this.loadingStatus = true
+				this.gainPayStatusTimer = setInterval(() => {
+					isEnoughVerify({
+						order_no: this.order_no,
+					}).then(async (res) => {
+						if (res.code === 100000) {
+							this.showPopup = false;
+							await this.$store.dispatch('setCurrentUserInfo')
+							clearInterval(this.gainPayStatusTimer)
+							this.loadingStatus = false
+
+							uni.$u.route('/pages/payResult/payResult', {
+								serviceType: 1,
+								service_charge: this.service_charge
+							});
+						}
+						if (res.code === 121000) {
+							this.loadingStatus = false
+							this.showDialog = true
+							return;
+						}
+
+					}).catch((err) => {
+						console.log(err, 'err');
+					})
+				}, 500)
+			},
 			jumpContent(val) {
 				if (val === 'assess') {
 					uni.$u.route('/subpages/assessAgreement/assessAgreement')
@@ -365,7 +397,9 @@
 			}
 		},
 		onUnload() {
+			this.loadingStatus = false
 			clearInterval(this.timer)
+			clearInterval(this.gainPayStatusTimer)
 		},
 	}
 </script>
@@ -377,6 +411,11 @@
 		background: #FFFFFF;
 		box-sizing: border-box;
 		padding: 0 32rpx;
+
+		.hello {
+			z-index: 2;
+			background: transparent;
+		}
 
 		// 预计放款内容
 		.predict_loan {

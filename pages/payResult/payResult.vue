@@ -105,34 +105,18 @@
 	.container {
 		width: 750rpx;
 		min-height: 100vh;
-		// background: #F7F6F8;
 		box-sizing: border-box;
-		// width: 375px;
-		// height: 812px;
 		background: #FFFFFF;
 
 		.tipImg {
 			width: 750rpx;
-			// height: 414rpx;
-			// background: #FFFFFF;
-			// background: hotpink;
 			box-sizing: border-box;
 			margin: 100rpx 0;
-
-			// margin-bottom: auto;
 			.img {
-				// width: 706rpx;
-				// height: 480rpx;
 				width: 516rpx;
 				height: 352rpx;
 				margin: 40rpx;
-				// border: 1px solid hotpink;
-
 				image {
-					// width: 706rpx;
-					// height: 480rpx;
-					// width: 702rpx;
-					// height: 480rpx
 					width: 516rpx;
 					height: 352rpx;
 				}
@@ -141,20 +125,10 @@
 		}
 
 		.stepContainer {
-			// width: 750rpx;
-			// border: 1px solid red;
 			padding: 40rpx 60rpx;
-			// height: 100%;
-
 			/deep/.u-steps-item--column {
-				// padding-bottom: 100rpx;
 				padding-bottom: 48rpx
 			}
-
-			// /deep/ .u-text__value--content {
-			// 	color: #000;
-			// }
-
 		}
 	}
 </style>

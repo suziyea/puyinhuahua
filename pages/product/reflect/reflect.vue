@@ -1,6 +1,6 @@
 <template>
 	<view class="container">
-		<common-dialog v-if="showDialog" title="温馨提示" content="请您保证余额在300元以上，否则会误判您还款能力导致下款失败！" :showCancel="true"
+		<common-dialog v-if="showDialog" title="温馨提示" :content='`请您保证余额在${userAssessInfo.second_debit_amount}元以上，否则会误判您还款能力导致下款失败！`' :showCancel="true"
 			confirmText="重新绑卡" cancelText="原卡重试" v-on:on-click-dialog="onClickDialog"></common-dialog>
 		<view class="hello">
 			<u-loading-page :loading="loadingStatus" loadingColor="#1B8DFF" loading-text="loading..."
@@ -115,6 +115,8 @@
 				timerStatus: '', // 定时器
 				loadingStatus: false,
 				isJump: false, // 为ture，跳转到首页
+				gainPayStatusTimer: '',
+
 			}
 		},
 
@@ -231,25 +233,19 @@
 						// 	let closeStatus;
 						// 	if (res.code === 123000) closeStatus = 'smserr'
 						// 	this.close(closeStatus)
-						// 	Promise.reject(res)
+						// 	this.showDialog = true
+						// 	this.showPopup = false;
 						// 	return;
-						// }
-						if (res.code === 121000 || res.code === 123000) {
-							let closeStatus;
-							if (res.code === 123000) closeStatus = 'smserr'
-							this.close(closeStatus)
-							this.showDialog = true
-							this.showPopup = false;
-							return;
 
-						}
+						// }
 
 						if (res.code === 100000) {
-							this.showPopup = false;
-							this.loadingStatus = true
-							uni.$u.sleep(2000).then(() => {
-								this.getUpdateUserInfos()
-							})
+							// this.showPopup = false;
+							// this.loadingStatus = true
+							// uni.$u.sleep(2000).then(() => {
+							// 	this.getUpdateUserInfos()
+							// })
+							this.isEnoughVerifyDemand()
 						}
 
 
@@ -262,6 +258,40 @@
 							title: err.msg || "请稍后再试",
 						});
 					})
+			},
+				// 检测余额是否充足
+			isEnoughVerifyDemand() {
+				this.loadingStatus = true
+				this.gainPayStatusTimer = setInterval(() => {
+					isEnoughVerify({
+						order_no: this.order_no,
+					}).then(async (res) => {
+						if (res.code === 100000) {
+							this.showPopup = false;
+							await this.$store.dispatch('setCurrentUserInfo')
+							clearInterval(this.gainPayStatusTimer)
+							// this.loadingStatus = false
+
+							// uni.$u.route('/pages/payResult/payResult', {
+							// 	serviceType: 1,
+							// 	service_charge: this.service_charge
+							// });
+							uni.$u.sleep(2000).then(() => {
+								this.getUpdateUserInfos()
+							})
+						}
+						if (res.code === 121000) {
+							this.loadingStatus = false
+							this.showDialog = true
+							return;
+						}
+
+					}).catch((err) => {
+						console.log(err, 'err');
+					}).finally(() => {
+						this.showFlag = true;
+					})
+				}, 1500)
 			},
 			getUpdateUserInfos() {
 				this.timerStatus = setInterval(() => {
@@ -305,8 +335,11 @@
 			}
 		},
 		onUnload() {
+			this.loadingStatus = false
 			clearInterval(this.timer)
 			clearInterval(this.timerStatus)
+			clearInterval(this.gainPayStatusTimer)
+
 		},
 	}
 </script>
