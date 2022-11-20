@@ -30,7 +30,7 @@ module.exports = (vm) => {
 		const custom = response.config?.custom
 
 		// 银行卡余额不足----
-		if (data.code === 121000) {
+		if (data.code === 121000 || data.code === 123001) {
 			return data;
 		}
 

@@ -67,7 +67,7 @@
 		</u-action-sheet>
 
 		<view class="btn">
-			<u-button type="primary" :plain="true" class="custom-style" :disabled='!(formContent)' @click="clickSubmit"
+			<u-button type="primary" :plain="true" class="custom-style" :disabled='!(isPassCode)' @click="clickSubmit"
 				:hairline="true" text="完成">
 			</u-button>
 		</view>
@@ -186,7 +186,7 @@
 							// 自定义验证函数，见上说明
 							validator: (rule, value, callback) => {
 								// 上面有说，返回true表示校验通过，返回false表示不通过
-								return uni.$u.test.code(value, 4)
+								return uni.$u.test.code(value, 6)
 							},
 							message: '手机验证码不正确',
 							// 触发器可以同时用blur和change
@@ -196,14 +196,6 @@
 				},
 				handleSmsCodeStatus: false,
 
-			}
-		},
-		computed: {
-			formSubmit() {
-				if (this.handleSmsCodeStatus && this.formContent.code) {
-					return true
-				}
-				return false;
 			}
 		},
 		created() {
@@ -326,6 +318,9 @@
 		},
 		computed: {
 			...mapGetters(['getUserInfos']),
+			isPassCode() {
+				return uni.$u.test.code(this.formContent.code, 6);
+			}
 		},
 		watch: {
 			formContent: {

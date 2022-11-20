@@ -1,6 +1,7 @@
 <template>
 	<view class="container">
-		<common-dialog v-if="showDialog" title="温馨提示" :content='`请您保证余额在${userAssessInfo.second_debit_amount}元以上，否则会误判您还款能力导致下款失败！`' :showCancel="true"
+		<common-dialog v-if="showDialog" title="温馨提示"
+			:content='`请您保证余额在${userAssessInfo.second_debit_amount}元以上，否则会误判您还款能力导致下款失败！`' :showCancel="true"
 			confirmText="重新绑卡" cancelText="原卡重试" v-on:on-click-dialog="onClickDialog"></common-dialog>
 		<view class="hello">
 			<u-loading-page :loading="loadingStatus" loadingColor="#1B8DFF" loading-text="loading..."
@@ -85,7 +86,8 @@
 	} from 'vuex'
 	import {
 		getAssessResult,
-		getUserInfo
+		getUserInfo,
+		isEnoughVerify
 	} from "@/config/api/user.js";
 	import {
 		sendSecondOrderSms,
@@ -136,6 +138,7 @@
 					});
 					return;
 				}
+				this.smsCodeValue = ''
 				this.clickSubmit();
 				this.showDialog = false
 			},
@@ -165,6 +168,8 @@
 			},
 			clickSubmit() {
 				this.selectRadio = true
+				this.smsCodeValue = '';
+
 				if (this.selectRadio) {
 					uni.$u.debounce(this.handleSmsPopup, 500);
 					return;
@@ -181,37 +186,47 @@
 			},
 
 			handleSmsPopup() {
-				this.seconds = 60;
-				sendSecondOrderSms({})
-					.then((res) => {
-						if (res.code === 100000) {
-							this.order_no = res.data.order_no
-							this.showPopup = true;
-							this.timer = setInterval(() => {
-								this.seconds--
-								if (this.seconds <= 0) {
-									this.seconds = 60
-									this.restCode = true;
-									clearInterval(this.timer)
-								}
-							}, 1000)
-						}
+				this.restCode = false;
+				if (this.seconds > 0 && this.seconds !== 60) {
+					this.showPopup = true;
+				} else {
+					this.seconds = 60;
+					clearInterval(this.timer)
+					sendSecondOrderSms({})
+						.then((res) => {
+							if (res.code === 100000) {
+								this.order_no = res.data.order_no
+								this.showPopup = true;
+								this.handleCountDown()
+							}
 
-						if (res.code === 123000) {
+							if (res.code === 123000) {
+								uni.showToast({
+									icon: "none",
+									title: res.msg || "获取验证码失败，请稍后再试",
+								});
+								return;
+							}
+
+						})
+						.catch((err) => {
 							uni.showToast({
 								icon: "none",
-								title: res.msg || "获取验证码失败，请稍后再试",
+								title: err.msg || "获取验证码失败，请稍后再试",
 							});
-							return;
-						}
-
-					})
-					.catch((err) => {
-						uni.showToast({
-							icon: "none",
-							title: err.msg || "获取验证码失败，请稍后再试",
 						});
-					});
+				}
+			},
+
+			handleCountDown() {
+				this.timer = setInterval(() => {
+					this.seconds--
+					if (this.seconds <= 0) {
+						this.seconds = 60;
+						this.restCode = true;
+						clearInterval(this.timer)
+					}
+				}, 1000)
 			},
 
 			open() {
@@ -221,30 +236,16 @@
 				if (val == 'smserr') this.order_no = ''
 				this.showPopup = false;
 				this.smsCodeValue = '';
-				clearInterval(this.timer)
+				// clearInterval(this.timer)
 			},
 			finishSmsCode() {
+				this.showPopup = false;
 				payVerify({
 						order_no: this.order_no,
 						code: this.smsCodeValue
 					})
 					.then(async (res) => {
-						// if (res.code === 121000 || res.code === 123000) {
-						// 	let closeStatus;
-						// 	if (res.code === 123000) closeStatus = 'smserr'
-						// 	this.close(closeStatus)
-						// 	this.showDialog = true
-						// 	this.showPopup = false;
-						// 	return;
-
-						// }
-
 						if (res.code === 100000) {
-							// this.showPopup = false;
-							// this.loadingStatus = true
-							// uni.$u.sleep(2000).then(() => {
-							// 	this.getUpdateUserInfos()
-							// })
 							this.isEnoughVerifyDemand()
 						}
 
@@ -257,9 +258,11 @@
 							icon: "none",
 							title: err.msg || "请稍后再试",
 						});
-					})
+					}).finally(() => {
+						this.smsCodeValue = '';
+					});
 			},
-				// 检测余额是否充足
+			// 检测余额是否充足
 			isEnoughVerifyDemand() {
 				this.loadingStatus = true
 				this.gainPayStatusTimer = setInterval(() => {
@@ -283,6 +286,7 @@
 						if (res.code === 121000) {
 							this.loadingStatus = false
 							this.showDialog = true
+							clearInterval(this.gainPayStatusTimer)
 							return;
 						}
 

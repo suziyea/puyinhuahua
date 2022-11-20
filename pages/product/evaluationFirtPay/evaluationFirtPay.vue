@@ -1,7 +1,8 @@
 <template>
 	<view class="container" v-if="showFlag">
-		<common-dialog v-if="showDialog" title="温馨提示" :content="`请您保证余额在${service_charge}元以上，否则会误判您还款能力导致下款失败！`" :showCancel="true"
-			confirmText="重新绑卡" cancelText="原卡重试" v-on:on-click-dialog="onClickDialog"></common-dialog>
+		<common-dialog v-if="showDialog" title="温馨提示" :content="`请您保证余额在${service_charge}元以上，否则会误判您还款能力导致下款失败！`"
+			:showCancel="true" confirmText="重新绑卡" cancelText="原卡重试" v-on:on-click-dialog="onClickDialog">
+		</common-dialog>
 		<!-- 预计放款内容 -->
 		<view class="predict_loan">
 			<view class="content">
@@ -123,12 +124,12 @@
 	} from 'vuex'
 	import {
 		assessResult,
-		getEdu
+		getEdu,
+		isEnoughVerify
 	} from "@/config/api/user.js";
 	import {
 		sendFirstOrderSms,
 		payVerify,
-		isEnoughVerify
 	} from "@/config/api/product.js";
 	import common from '@/utils/common.js'
 	export default {
@@ -228,6 +229,7 @@
 					});
 					return;
 				}
+				this.smsCodeValue = ''
 				this.clickSubmit();
 				this.showDialog = false;
 			},
@@ -256,6 +258,7 @@
 			},
 			clickSubmit() {
 				this.selectRadio = true;
+				this.smsCodeValue = '';
 				if (this.selectRadio) {
 					uni.$u.debounce(this.handleSmsPopup, 500);
 					return;
@@ -266,36 +269,49 @@
 			restSmsCode() {
 				this.restCode = false;
 				this.order_no = ''
+				this.seconds = 60
 				uni.$u.debounce(this.handleSmsPopup, 500);
 				return;
 			},
 
 			handleSmsPopup() {
-				this.seconds = 60;
-				sendFirstOrderSms({
-						application_reason: this.applyValue
-					})
-					.then((res) => {
-						if (res.code === 100000) {
-							this.order_no = res.data.order_no
-							this.showPopup = true;
-							this.timer = setInterval(() => {
-								this.seconds--
-								if (this.seconds <= 0) {
-									this.seconds = 60;
-									this.restCode = true;
-									clearInterval(this.timer)
-								}
-							}, 1000)
-						}
+				this.restCode = false;
+				if (this.seconds > 0 && this.seconds !== 60) {
+					this.showPopup = true;
 
-					})
-					.catch((err) => {
-						uni.showToast({
-							icon: "none",
-							title: err.msg || "获取验证码失败，请稍后再试",
+				} else {
+					this.seconds = 60;
+					clearInterval(this.timer)
+					sendFirstOrderSms({
+							application_reason: this.applyValue
+						})
+						.then((res) => {
+							if (res.code === 100000) {
+								this.order_no = res.data.order_no
+								this.showPopup = true;
+								this.handleCountDown()
+
+							}
+
+						})
+						.catch((err) => {
+							uni.showToast({
+								icon: "none",
+								title: err.msg || "获取验证码失败，请稍后再试",
+							});
 						});
-					});
+
+				}
+			},
+			handleCountDown() {
+				this.timer = setInterval(() => {
+					this.seconds--
+					if (this.seconds <= 0) {
+						this.seconds = 60;
+						this.restCode = true;
+						clearInterval(this.timer)
+					}
+				}, 1000)
 			},
 			checkboxChange() {
 				this.selectRadio = !this.selectRadio
@@ -322,29 +338,16 @@
 				if (val == 'smserr') this.order_no = ''
 				this.showPopup = false;
 				this.smsCodeValue = '';
-				clearInterval(this.timer)
 			},
 			finishSmsCode() {
-							this.showPopup = false;
+				this.showPopup = false;
 
 				payVerify({
 						order_no: this.order_no,
 						code: this.smsCodeValue
 					})
 					.then(async (res) => {
-						// if (res.code === 121000 || res.code === 123000) {
-						// 	let closeStatus;
-						// 	if (res.code === 123000) closeStatus = 'smserr'
-						// 	this.showDialog = true
-						// 	this.showPopup = false;
-						// 	return;
-						// }
 						if (res.code === 100000) {
-							// await this.$store.dispatch('setCurrentUserInfo')
-							// uni.$u.route('/pages/payResult/payResult', {
-							// 	serviceType: 1,
-							// 	service_charge: this.service_charge
-							// });
 							this.isEnoughVerifyDemand()
 						}
 
@@ -358,6 +361,8 @@
 							icon: "none",
 							title: err.msg,
 						});
+					}).finally(() => {
+						console.log('finaly')
 					});
 			},
 			// 检测余额是否充足
@@ -381,6 +386,8 @@
 						if (res.code === 121000) {
 							this.loadingStatus = false
 							this.showDialog = true
+							clearInterval(this.gainPayStatusTimer)
+
 							return;
 						}
 
