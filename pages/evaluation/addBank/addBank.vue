@@ -100,6 +100,7 @@
 					id_number: '',
 					bank_name: '',
 					bank_id: '',
+					card_number: '',
 					reserve_phone: '',
 					code: '',
 				},
@@ -154,7 +155,10 @@
 						validator: (rule, value, callback) => {
 							// 上面有说，返回true表示校验通过，返回false表示不通过
 							// uni.$u.test.mobile()就是返回true或者false的
-							return common.isBankCardNo(value);
+							// return common.isBankCardNo(value);
+							return uni.$u.test.rangeLength(uni.$u.trim(value, 'all'), [
+								16, 21
+							])
 						},
 						message: '请输银行卡号码不正确',
 						// 触发器可以同时用blur和change
@@ -170,7 +174,7 @@
 							validator: (rule, value, callback) => {
 								// 上面有说，返回true表示校验通过，返回false表示不通过
 								// uni.$u.test.mobile()就是返回true或者false的
-								return uni.$u.test.mobile(value);
+								return uni.$u.test.mobile(uni.$u.trim(value, 'all'))
 							},
 							message: '手机号码不正确',
 							// 触发器可以同时用blur和change
@@ -280,7 +284,16 @@
 						uni.showLoading({
 							title: '正在获取验证码'
 						})
-						addBankInfoSms(this.formContent)
+						let params = {
+							"actual_name": uni.$u.trim(this.formContent.actual_name, 'all'),
+							"id_number": uni.$u.trim(this.formContent.id_number, 'all'),
+							"bank_name": this.formContent.bank_name,
+							"bank_id": this.formContent.bank_id,
+							"card_number": uni.$u.trim(this.formContent.card_number, 'all'),
+							"reserve_phone": uni.$u.trim(this.formContent.reserve_phone, 'all'),
+							"code":  uni.$u.trim(this.formContent.code, 'all'),
+						}
+						addBankInfoSms(params)
 							.then((res) => {
 								if (res.code === 100000) {
 									uni.hideLoading();
@@ -328,8 +341,9 @@
 					if (this.formContent.actual_name && this.formContent.id_number && this.formContent.bank_name && this
 						.formContent.card_number && this.formContent.reserve_phone) {
 						if (uni.$u.test.chinese(this.formContent.actual_name) && uni.$u.test.idCard(this.formContent
-								.id_number) && common.isBankCardNo(this.formContent.card_number) && uni.$u.test.mobile(this
-								.formContent.reserve_phone)) {
+								.id_number) && uni.$u.test.rangeLength(uni.$u.trim(this.formContent.card_number, 'all'), [
+								16, 21
+							]) && uni.$u.test.mobile(uni.$u.trim(this.formContent.reserve_phone, 'all'))) {
 							this.handleSmsCodeStatus = true
 							return;
 						}
