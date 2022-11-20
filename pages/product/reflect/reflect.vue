@@ -367,7 +367,6 @@
 		.content {
 			width: 686rpx;
 			height: 784rpx;
-			// padding: 0 16rpx;
 			background: #FFFFFF;
 			border-radius: 16rpx;
 			-webkit-box-sizing: border-box;

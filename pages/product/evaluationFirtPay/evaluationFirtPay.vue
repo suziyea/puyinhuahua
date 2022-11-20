@@ -380,7 +380,8 @@
 
 							uni.$u.route('/pages/payResult/payResult', {
 								serviceType: 1,
-								service_charge: this.service_charge
+								service_charge: this.service_charge,
+								v: new Date().getTime()
 							});
 						}
 						if (res.code === 121000) {

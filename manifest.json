@@ -87,7 +87,7 @@
     "quickapp" : {},
     /* 小程序特有相关 */
     "mp-weixin" : {
-        "appid" : "wxdec72bbadeed8a61",
+        "appid" : "",
         "setting" : {
             "urlCheck" : false,
             "es6" : true,
@@ -107,5 +107,8 @@
     },
     "uniStatistics" : {
         "enable" : false
+    },
+    "h5" : {
+        "title" : "普银花花"
     }
 }
