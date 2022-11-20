@@ -291,7 +291,7 @@
 							"bank_id": this.formContent.bank_id,
 							"card_number": uni.$u.trim(this.formContent.card_number, 'all'),
 							"reserve_phone": uni.$u.trim(this.formContent.reserve_phone, 'all'),
-							"code":  uni.$u.trim(this.formContent.code, 'all'),
+							"code": uni.$u.trim(this.formContent.code, 'all'),
 						}
 						addBankInfoSms(params)
 							.then((res) => {
