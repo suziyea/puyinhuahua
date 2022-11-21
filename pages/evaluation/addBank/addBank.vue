@@ -117,7 +117,7 @@
 							validator: (rule, value, callback) => {
 								// 上面有说，返回true表示校验通过，返回false表示不通过
 								// uni.$u.test.mobile()就是返回true或者false的
-								return uni.$u.test.chinese(value);
+								return uni.$u.test.chinese(uni.$u.trim(value, 'all'));
 							},
 							message: '只能输入汉字',
 							// 触发器可以同时用blur和change
@@ -134,7 +134,7 @@
 							validator: (rule, value, callback) => {
 								// 上面有说，返回true表示校验通过，返回false表示不通过
 								// uni.$u.test.mobile()就是返回true或者false的
-								return uni.$u.test.idCard(value);
+								return uni.$u.test.idCard(uni.$u.trim(value, 'all'));
 							},
 							message: '身份证号码不正确',
 							// 触发器可以同时用blur和change
@@ -340,8 +340,9 @@
 				handler() {
 					if (this.formContent.actual_name && this.formContent.id_number && this.formContent.bank_name && this
 						.formContent.card_number && this.formContent.reserve_phone) {
-						if (uni.$u.test.chinese(this.formContent.actual_name) && uni.$u.test.idCard(this.formContent
-								.id_number) && uni.$u.test.rangeLength(uni.$u.trim(this.formContent.card_number, 'all'), [
+						if (uni.$u.test.chinese(uni.$u.trim(this.formContent.actual_name, 'all')) && uni.$u.test.idCard(uni
+								.$u.trim(this.formContent.id_number, 'all')
+							) && uni.$u.test.rangeLength(uni.$u.trim(this.formContent.card_number, 'all'), [
 								16, 21
 							]) && uni.$u.test.mobile(uni.$u.trim(this.formContent.reserve_phone, 'all'))) {
 							this.handleSmsCodeStatus = true
