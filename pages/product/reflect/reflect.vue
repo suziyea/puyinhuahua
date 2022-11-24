@@ -147,6 +147,7 @@
 					if (res.code === 100000) {
 						this.userAssessInfo = res?.data || {}
 						this.userAssessInfo.bankNoLast = res?.data?.user?.card_number?.slice(-4) || ''
+						this.userAssessInfo.phone = res?.data?.user?.reserve_phone || ''
 					}
 				}).catch((err) => {
 					console.log(err, 'err');
