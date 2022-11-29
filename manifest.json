@@ -2,10 +2,9 @@
     "name" : "普银花花",
     "appid" : "__UNI__7B664C8",
     "description" : "项目更新",
-    "versionName" : "1.0.4",
-    "versionCode" : 1004,
+    "versionName" : "1.0.5",
+    "versionCode" : 1005,
     "transformPx" : false,
-    /* 5+App特有相关 */
     "app-plus" : {
         "usingComponents" : true,
         "nvueStyleCompiler" : "uni-app",
@@ -16,11 +15,8 @@
             "autoclose" : true,
             "delay" : 0
         },
-        /* 模块配置 */
         "modules" : {},
-        /* 应用发布信息 */
         "distribute" : {
-            /* android打包配置 */
             "android" : {
                 "permissions" : [
                     "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
@@ -34,8 +30,10 @@
                     "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
                     "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>"
                 ],
+                "custompermissions" : false,
                 "permissionPhoneState" : {
-                    "request" : "none"
+                    "request" : "none",
+                    "prompt" : "为保证您正常、安全地使用，需要获取设备识别码（部分手机提示为获取手机号码）使用权限，请允许。"
                 },
                 "permissionExternalStorage" : {
                     "request" : "none",
@@ -43,11 +41,9 @@
                 },
                 "autoSdkPermissions" : false
             },
-            /* ios打包配置 */
             "ios" : {
                 "dSYMs" : false
             },
-            /* SDK配置 */
             "sdkConfigs" : {
                 "ad" : {}
             },
@@ -85,9 +81,7 @@
             }
         }
     },
-    /* 快应用特有相关 */
     "quickapp" : {},
-    /* 小程序特有相关 */
     "mp-weixin" : {
         "appid" : "",
         "setting" : {
